@@ -20,6 +20,7 @@ import {
 } from "@forge/consts/knight-hacks";
 
 import { User } from "./auth";
+import { varchar } from "drizzle-orm/mysql-core";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
@@ -538,3 +539,11 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   formData: t.jsonb().notNull(),
   formValidatorJson: t.jsonb().notNull(),
 }));
+
+export const Roles = createTable("roles", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  discordRoleId: t.varchar().unique().notNull(),
+  permissions: t.varchar(),
+}));
+
+export const InsertRolesSchema = createInsertSchema(Roles);
