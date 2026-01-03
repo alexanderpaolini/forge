@@ -37,7 +37,7 @@ export default async function FormResponsesPage({
   // first verify form exists
   let form;
   try {
-    form = await api.forms.getForm({ name: formId });
+    form = await api.forms.getForm({ slug_name: formId });
   } catch {
     return (
       <HydrateClient>

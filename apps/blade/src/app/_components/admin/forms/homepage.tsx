@@ -45,11 +45,11 @@ export default function FormsClient() {
 
         {forms.map((form) => (
           <FormCard
-            key={form.name}
-            name={form.name}
+            key={form.slugName}
+            slug_name={form.slugName}
             createdAt={form.createdAt}
             onOpen={() =>
-              router.push(`/forms/${encodeURIComponent(form.name)}`)
+              router.push(`/forms/${encodeURIComponent(form.slugName)}`)
             }
           />
         ))}

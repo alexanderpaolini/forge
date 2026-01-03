@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Edit, Trash2 } from "lucide-react";
 import * as z from "zod";
 
@@ -36,11 +37,11 @@ import { api } from "~/trpc/react";
 const renameSchema = z.object({ newName: z.string().min(1) });
 
 export function FormCard({
-  name,
+  slug_name,
   createdAt,
   onOpen,
 }: {
-  name: string;
+  slug_name: string;
   createdAt: string | Date;
   onOpen?: () => void;
 }) {
@@ -81,13 +82,13 @@ export function FormCard({
 
   const createdDate = new Date(createdAt).toLocaleString();
 
-  const { data: fullForm } = api.forms.getForm.useQuery({ name });
+  const { data: fullForm } = api.forms.getForm.useQuery({ slug_name });
 
   const handleDelete = async () => {
-    if (!confirm(`Delete form "${name}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete form "${slug_name}"? This cannot be undone.`)) return;
     setIsDeleting(true);
     try {
-      await deleteForm.mutateAsync({ name });
+      await deleteForm.mutateAsync({ slug_name });
     } finally {
       setIsDeleting(false);
     }
@@ -103,7 +104,7 @@ export function FormCard({
       };
 
       await createForm.mutateAsync(newPayload);
-      await deleteForm.mutateAsync({ name });
+      await deleteForm.mutateAsync({ slug_name });
     } catch {
       // errors handled by mutation
     }
@@ -125,7 +126,7 @@ export function FormCard({
       <CardHeader className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <CardTitle className="truncate text-base font-medium">
-            {name}
+            {slug_name}
           </CardTitle>
         </div>
         <CardAction>
@@ -227,6 +228,20 @@ export function FormCard({
           Created {createdDate}
         </div>
       </CardFooter>
+
+      <div className="flex w-full justify-center gap-4">
+        <Button className="w-[40%]" onClick={(e) => e.stopPropagation()}>
+          {" "}
+          <Link href={`/admin/forms/${slug_name}/responses`}>
+            {" "}
+            Responses{" "}
+          </Link>{" "}
+        </Button>
+        <Button className="w-[40%]" onClick={(e) => e.stopPropagation()}>
+          {" "}
+          <Link href={`/admin/forms/${slug_name}`}> Edit Form </Link>{" "}
+        </Button>
+      </div>
     </Card>
   );
 }

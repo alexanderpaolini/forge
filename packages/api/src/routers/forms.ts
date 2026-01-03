@@ -74,6 +74,7 @@ export const formsRouter = {
     )
     .mutation(async ({ input }) => {
       const jsonSchema = generateJsonSchema(input.formData);
+      console.log(input);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
@@ -107,6 +108,7 @@ export const formsRouter = {
   getForm: publicProcedure
     .input(z.object({ slug_name: z.string() }))
     .query(async ({ input }) => {
+      console.log(input);
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.slugName, input.slug_name),
       });
@@ -128,12 +130,12 @@ export const formsRouter = {
     }),
 
   deleteForm: adminProcedure
-    .input(z.object({ name: z.string() }))
+    .input(z.object({ slug_name: z.string() }))
     .mutation(async ({ input }) => {
       const deletion = await db
         .delete(FormsSchemas)
-        .where(eq(FormsSchemas.name, input.name))
-        .returning({ name: FormsSchemas.name });
+        .where(eq(FormsSchemas.slugName, input.slug_name))
+        .returning({ slugName: FormsSchemas.slugName });
 
       if (deletion.length === 0) {
         throw new TRPCError({
@@ -162,7 +164,7 @@ export const formsRouter = {
           : undefined,
         orderBy: [desc(FormsSchemas.createdAt)],
         columns: {
-          name: true,
+          slugName: true,
           createdAt: true,
         },
       });
