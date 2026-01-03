@@ -189,7 +189,7 @@ export const formsRouter = {
 
       // validate response
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.name, input.form),
+        where: (t, { eq }) => eq(t.id, input.form),
       });
 
       if (!form) {
