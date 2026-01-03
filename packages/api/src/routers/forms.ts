@@ -22,7 +22,9 @@ export const formsRouter = {
   createForm: adminProcedure
     .input(
       FormSchemaSchema.omit({
+        id: true,
         name: true,
+        slugName: true,
         createdAt: true,
         formData: true,
         formValidatorJson: true,
@@ -30,6 +32,8 @@ export const formsRouter = {
     )
     .mutation(async ({ input }) => {
       const jsonSchema = generateJsonSchema(input.formData);
+
+      const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -43,13 +47,16 @@ export const formsRouter = {
         .values({
           ...input,
           name: input.formData.name,
+          slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
-          target: FormsSchemas.name,
+          target: FormsSchemas.id,
           set: {
             ...input,
+            name: input.formData.name,
+            slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
           },
         });
@@ -59,6 +66,7 @@ export const formsRouter = {
     .input(
       FormSchemaSchema.omit({
         name: true,
+        slugName: true,
         createdAt: true,
         formData: true,
         formValidatorJson: true,
@@ -66,6 +74,8 @@ export const formsRouter = {
     )
     .mutation(async ({ input }) => {
       const jsonSchema = generateJsonSchema(input.formData);
+
+      const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -79,27 +89,26 @@ export const formsRouter = {
         .values({
           ...input,
           name: input.formData.name,
-          duesOnly: input.duesOnly ?? false,
-          allowResubmission: input.allowResubmission ?? false,
+          slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
-          target: FormsSchemas.name,
+          target: FormsSchemas.id,
           set: {
             ...input,
-            duesOnly: input.duesOnly ?? false,
-            allowResubmission: input.allowResubmission ?? false,
+            name: input.formData.name,
+            slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
           },
         });
     }),
 
   getForm: publicProcedure
-    .input(z.object({ name: z.string() }))
+    .input(z.object({ slug_name: z.string() }))
     .query(async ({ input }) => {
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.name, input.name),
+        where: (t, { eq }) => eq(t.slugName, input.slug_name),
       });
 
       if (form === undefined) {

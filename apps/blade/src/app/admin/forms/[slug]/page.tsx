@@ -112,7 +112,7 @@ export default function FormEditorPage({
     error: fetchError,
     isLoading: isFetching,
   } = api.forms.getForm.useQuery(
-    { name: slug },
+    { slug_name: slug },
     { retry: false, refetchOnWindowFocus: false },
   );
 

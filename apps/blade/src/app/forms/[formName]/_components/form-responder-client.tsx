@@ -26,7 +26,7 @@ export function FormResponderClient({
   const [showText, setShowText] = useState(false);
 
   const formQuery = api.forms.getForm.useQuery({
-    name: formName,
+    slug_name: formName,
   });
 
   // is bro a dues paying member?
