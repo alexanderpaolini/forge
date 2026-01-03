@@ -192,8 +192,10 @@ export function FormResponderClient({
       }
     });
 
+		if(!formQuery.data) return;
+
     submitResponse.mutate({
-      form: formName,
+      form: formQuery.data.id,
       responseData,
     });
   };
