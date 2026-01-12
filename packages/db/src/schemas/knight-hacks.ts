@@ -539,18 +539,3 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   formData: t.jsonb().notNull(),
   formValidatorJson: t.jsonb().notNull(),
 }));
-
-export const Permissions = createTable("permissions", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  roleId: t.uuid().notNull().references(() => Roles.id),
-  userId: t.uuid().notNull().references(() => User.id)
-}));
-
-export const Roles = createTable("roles", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  name: t.varchar().notNull().default(""),
-  discordRoleId: t.varchar().unique().notNull(),
-  permissions: t.varchar().notNull(),
-}));
-
-export const InsertRolesSchema = createInsertSchema(Roles);
