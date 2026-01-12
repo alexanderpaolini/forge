@@ -1,5 +1,5 @@
-import { relations } from "drizzle-orm";
-import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
+import { name, relations } from "drizzle-orm";
+import { integer, pgEnum, pgTable, pgTableCreator, PgUUID, primaryKey, unique, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
@@ -13,6 +13,7 @@ import {
   HACKATHON_APPLICATION_STATES,
   LEVELS_OF_STUDY,
   MAJORS,
+  PERMISSIONS,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
@@ -539,8 +540,15 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   formValidatorJson: t.jsonb().notNull(),
 }));
 
+export const Permissions = createTable("permissions", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  roleId: t.uuid().notNull().references(() => Roles.id),
+  userId: t.uuid().notNull().references(() => User.id)
+}));
+
 export const Roles = createTable("roles", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar().notNull().default(""),
   discordRoleId: t.varchar().unique().notNull(),
   permissions: t.varchar().notNull(),
 }));
