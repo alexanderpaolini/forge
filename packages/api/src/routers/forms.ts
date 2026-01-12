@@ -7,8 +7,8 @@ import { FormSchemaValidator } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import { FormsSchemas } from "@forge/db/schemas/knight-hacks";
 
-import { adminProcedure, publicProcedure } from "../trpc";
-import { generateJsonSchema } from "../utils";
+import { permProcedure, publicProcedure } from "../trpc";
+import { controlPerms, generateJsonSchema } from "../utils";
 
 interface FormSchemaRow {
   name: string;
@@ -18,9 +18,11 @@ interface FormSchemaRow {
 }
 
 export const formsRouter = {
-  createForm: adminProcedure
+  createForm: permProcedure
     .input(FormSchemaValidator)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      controlPerms.and(["EDIT_FORMS"], ctx);
+
       const jsonSchema = generateJsonSchema(input);
 
       if (!jsonSchema.success) {
