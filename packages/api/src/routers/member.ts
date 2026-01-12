@@ -32,12 +32,11 @@ import {
 
 import { minioClient } from "../minio/minio-client";
 import {
-  adminProcedure,
-  checkInProcedure,
+  permProcedure,
   protectedProcedure,
   publicProcedure,
 } from "../trpc";
-import { log } from "../utils";
+import { controlPerms, log } from "../utils";
 
 export const memberRouter = {
   createMember: protectedProcedure
@@ -325,15 +324,21 @@ export const memberRouter = {
     return events;
   }),
 
-  getMembers: adminProcedure.query(
-    async () => await db.query.Member.findMany(),
+  getMembers: permProcedure.query(
+    async ({ ctx }) => {
+      // CHECKIN_CLUB_EVENT is here because people trying to check-in
+      // need to retrieve the member list for manual entry
+      controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
+
+      return await db.query.Member.findMany();
+    }
   ),
   getMemberCount: publicProcedure.query(
     async () =>
       (await db.select({ count: count() }).from(Member))[0]?.count ?? 0,
   ),
 
-  giveMemberPoints: adminProcedure
+  giveMemberPoints: permProcedure
     .input(
       z.object({
         id: z.string(),
@@ -341,6 +346,8 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_MEMBERS"], ctx);
+
       const member = await db.query.Member.findFirst({
         where: eq(Member.id, input.id),
       });
@@ -365,9 +372,11 @@ export const memberRouter = {
       });
     }),
 
-  getDuesPayingMembers: adminProcedure.query(
-    async () =>
-      await db
+  getDuesPayingMembers: permProcedure.query(
+    async ({ ctx }) => {
+      controlPerms.and(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+
+      return await db
         .select()
         .from(Member)
         .where(
@@ -377,10 +386,13 @@ export const memberRouter = {
               .from(DuesPayment)
               .where(eq(DuesPayment.memberId, Member.id)),
           ),
-        ),
+        );
+      }
   ),
 
-  getMemberAttendanceCounts: adminProcedure.query(async () => {
+  getMemberAttendanceCounts: permProcedure.query(async ({ ctx }) => {
+    controlPerms.and(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+
     // Get attendance count for each member
     const memberAttendance = await db
       .select({
@@ -404,9 +416,11 @@ export const memberRouter = {
     return memberAttendance;
   }),
 
-  createDuesPayingMember: adminProcedure
+  createDuesPayingMember: permProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+
       if (!input.id)
         throw new TRPCError({
           message: "Member ID is required to update dues paying status!",
@@ -430,9 +444,11 @@ export const memberRouter = {
       });
     }),
 
-  deleteDuesPayingMember: adminProcedure
+  deleteDuesPayingMember: permProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+
       if (!input.id)
         throw new TRPCError({
           message: "Member ID is required to update dues paying status!",
@@ -451,7 +467,9 @@ export const memberRouter = {
       });
     }),
 
-  clearAllDues: adminProcedure.mutation(async ({ ctx }) => {
+  clearAllDues: permProcedure.mutation(async ({ ctx }) => {
+    controlPerms.and(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+
     await db.delete(DuesPayment);
     await log({
       title: "ALL DUES CLEARED",
@@ -462,7 +480,7 @@ export const memberRouter = {
     });
   }),
 
-  eventCheckIn: checkInProcedure
+  eventCheckIn: permProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -471,6 +489,8 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
+
       const member = await db.query.Member.findFirst({
         where: eq(Member.userId, input.userId),
       });
